@@ -1,7 +1,7 @@
 def create_offeranalysis_dataset(profile,
                                  portfolio,
                                  offer_data,
-                                 transaction):
+                                 transaction_data):
     """ Creates an analytic dataset from the following Starbucks challenge 
     datasets:
     * portfolio.json - Contains offer ids and meta data (duration, type,
@@ -21,6 +21,7 @@ def create_offeranalysis_dataset(profile,
                     customer offers"""
     clean_data = []
     customerid_list = offer_data['customer_id'].unique()
+    # from tqdm import tqdm_notebook as tqdm
 
     for idx in tqdm(range(len(customerid_list))):
         clean_data.extend(create_combined_records(customerid_list[idx],
