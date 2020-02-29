@@ -143,28 +143,53 @@ transaction_data.head()
 
 ## 基于机器学习模型的预测
 
-当我拥有了feature和target，很自然就可以建立一个机器学习模型，根据大量数据去做评估和预测。机器学习模型有很多种，我选取了sklearn中的常用模型：logistic regression, random forest, and gradient boosting models。利用各模型的`accuracy, f1_score`两个指标去比较模型，其中，**random forest是训练数据集中的最佳模型**，其准确性为0.75，f1_score为0.75。当我们使用测试数据进行分析时，准确性达到0.69，f1_score达到0.69。该模型没有出现预测的过拟合。
+当我拥有了feature和target，很自然就可以建立一个机器学习模型，根据大量数据去做评估和预测。机器学习模型有很多种，我选取了sklearn中的常用模型：logistic regression, random forest, and gradient boosting models。利用各模型的`accuracy, f1_score`两个指标去比较模型，其中，**random forest是训练数据集中的相对较好模型**，其准确性为0.72，f1_score为0.72，AUC为0.78。当我们使用测试数据进行分析时，准确性达到0.71，f1_score达到0.71。该模型没有出现预测的过拟合。
+
+#### 指标对比
+
+- 针对二元分类器，准确率是最常见的评价指标，就是被分对的样本数除以所有的样本数，通常来说，正确率越高，分类器越好，但是有时候准确率高并不能代表一个算法就好。
+- 精确率表示被分为正例的示例中实际为正例的比例，召回率是覆盖面的度量，表示有多个正例被分为正例，recall=TP/(TP+FN)=TP/P=sensitive，可以看到召回率与灵敏度是一样的。
+- 精确率和召回率有时候会出现的矛盾的情况，这样就需要综合考虑他们，最常见的方法就是F-Measure（又称为F-Score）。F-Measure是Precision和Recall加权调和平均。当参数α=1时，就是最常见的F1，也即当F1较高时则能说明试验方法比较有效。
+
+本项目运行结果是random forest, and gradient boosting models 准确值较为接近，random forest的F1-score略高。
 
 ![ModelPerf](./Report_Pic/ModelPerf.png)
+
+曲线与FP_rate轴围成的面积（记作AUC）越大，说明性能越好，本项目中random forest, 和 gradient boosting models AUC值基本一致。
+
+![Comparison_of_ROC_and_AUC](./Report_Pic/Comparison_of_ROC_and_AUC.png)
 
 #### 调参
 本项目采用 RandomizedSearchCV 进行调参。GridSearchCV可以保证在指定的参数范围内找到精度最高的参数，但是这也是网格搜索的缺陷所在，它要求遍历所有可能参数的组合，在面对大数据集和多参数的情况下，相对耗时。本文会采用后一种RandomizedSearchCV随机参数搜索的方法。尝试优化的超参数及其尝试优化的多个值如下，
 
 ```
-- Number of trees in random forest, n_estimators = [10, 50, 100]
-- Number of features to consider at every split, max_features = ['auto', 'sqrt']
-- Minimum number of samples required to split a node, min_samples_split = [2, 10]
-- Minimum number of samples required at each leaf node, min_samples_leaf = [2, 4]
+# Number of trees in random forest
+n_estimators = [10, 20, 50, 100]
+
+# Number of features to consider at every split
+max_features = ['log2', 'sqrt', 10]
+
+# Minimum number of samples required to split a node
+min_samples_split = [2, 4, 10]
+
+# Minimum number of samples required at each leaf node
+min_samples_leaf = [2, 4]
+
+# 最大深度
+max_depth = [2,4,10]
+
+# 学习率
+learning_rate = [0.1, 0.05, 0.001]
 ```
 
 运行结果如下
 
 ```
 RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
-                       max_depth=None, max_features='auto', max_leaf_nodes=None,
+                       max_depth=10, max_features=10, max_leaf_nodes=None,
                        min_impurity_decrease=0.0, min_impurity_split=None,
-                       min_samples_leaf=4, min_samples_split=10,
-                       min_weight_fraction_leaf=0.0, n_estimators=50,
+                       min_samples_leaf=2, min_samples_split=4,
+                       min_weight_fraction_leaf=0.0, n_estimators=20,
                        n_jobs=None, oob_score=False, random_state=0, verbose=0,
                        warm_start=False)
 ```
@@ -177,19 +202,20 @@ RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
 
 #### random forest模型在不同n_estimators取值情况下的准确性
 
-可以看到当树的数量为80-90左右的时候，model的性能最好
+可以看到当n_estimators取值大于20以后，性能增长不多
 
 ```
-train_score = array([0.86331199, 0.87089918, 0.87397516, 0.87474206, 0.87483897, 0.87483897, 0.87483897])
+train_score = array([0.86345735, 0.87089751, 0.87392336, 0.87480054, 0.87483563, 0.87483897, 0.87483897])
 ```
 
 ![n_estimators](./Report_Pic/n_estimators.png)
 
-#### 模型结论                      
-通过random forest的运行结果，可以发现众多feature中影响购买行为的程度也各不相同，从测试数据集可以发现，
+#### 模型结论
 
-- 收入是重要因素
-- 顾客对discount的反应要比bogo的要好。
+GradientBoosting和Random Forest两种模型效果很接近，而Random Forest的准确性略高一些。根据各个指标对于交易是否成功影响的重要性可以发现
+
+- 顾客个人信息中，收入高低是决定购买的重要因素
+- 顾客对bogo的反应要比discount的要好。
 - 男性比女性更有可能购买。
 - 年龄段20-30顾客更容易消费。
 - 通过社交平台进行推广，效果更好。
@@ -215,6 +241,7 @@ Udacity提供的数据集是非常棒的，已经有了很多维度，但是生�
 **所以要跳脱数据，看看更精彩的大环境。**
 
 ## 参考文献
+
 1. [Investigating Starbucks Customers Segmentation using Unsupervised Machine Learning](https://medium.com/@jeffrisandy/investigating-starbucks-customers-segmentation-using-unsupervised-machine-learning-10b2ac0cfd3b)
 
 2. [Sparkify Project Report](https://github.com/TrW236/DataScientistND/blob/master/CP_Sparkify/report.md)
@@ -222,3 +249,5 @@ Udacity提供的数据集是非常棒的，已经有了很多维度，但是生�
 3. [GridSearchCV 与 RandomizedSearchCV 调参](https://blog.csdn.net/juezhanangle/article/details/80051256)
 
 4. [sklearn模型调优（判断是否过过拟合及选择参数）](https://blog.csdn.net/u012328159/article/details/79255433)
+
+5. [机器学习：准确率(Precision)、召回率(Recall)、F值(F-Measure)、ROC曲线、PR曲线](https://blog.csdn.net/quiet_girl/article/details/70830796#_jmp0_)
