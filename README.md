@@ -23,7 +23,7 @@ Python的Anaconda发行版中的常见库即可运行代码，如Pandas Numpy se
 
 #### 1. 机器学习模型的输出
 
-即 `./models_0219 路径下的.joblib文件`
+即 `./models_0229 路径下的.joblib文件`
 
 #### 2. 清洗后数据集的输出
 
@@ -32,8 +32,3 @@ Python的Anaconda发行版中的常见库即可运行代码，如Pandas Numpy se
 #### 3. Report
 
 分析报告，即 `Report.md`
-
-### 改进方向
-
-- 由于客户收入、报价持续时间、报价奖励这些数字特征对于模型影响较大：可以创建一个融合以上特征的全新多项式指标来改善机器学习模型。如new_feature特征，`new_feature = duration*reward/income`，之后将该特征也做归一化处理，进行模型训练。
-- 可以尝试用主成分分析，去减少数据集的feature维度。
